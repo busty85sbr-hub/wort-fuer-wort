@@ -1,0 +1,16 @@
+{
+  "name": "wort-fuer-wort",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lesespiel für Leseanfänger: Buchstaben oder Silben nacheinander aufdecken, das Wort lesen und mit einem Bild auflösen – als Web-App (GitHub Pages) und Android-App (Capacitor).",
+  "scripts": {
+    "android": "cap add android && node tools/android-anpassen.mjs && cap sync android"
+  },
+  "devDependencies": {
+    "@capacitor-community/text-to-speech": "4.1.1",
+    "@capacitor/android": "6.2.1",
+    "@capacitor/app": "6.0.2",
+    "@capacitor/cli": "6.2.1",
+    "@capacitor/core": "6.2.1"
+  }
+}

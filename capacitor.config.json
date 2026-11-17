@@ -1,0 +1,11 @@
+{
+  "appId": "de.wortfuerwort.app",
+  "appName": "Wort für Wort",
+  "webDir": "docs",
+  "backgroundColor": "#E9ECE7",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": false,
+    "webContentsDebuggingEnabled": false
+  }
+}

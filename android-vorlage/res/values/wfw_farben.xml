@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Farben der App: Papiergrund und Tinte -->
+    <color name="wfw_papier">#E9ECE7</color>
+    <color name="wfw_tinte">#26333A</color>
+</resources>

@@ -1,0 +1,17 @@
+{
+  "name": "Wort für Wort",
+  "short_name": "Wort für Wort",
+  "description": "Lesespiel für Leseanfänger: Buchstaben oder Silben nacheinander aufdecken, das Wort lesen und mit einem Bild auflösen.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#E9ECE7",
+  "theme_color": "#E9ECE7",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
