@@ -64,14 +64,16 @@ header {
 #info { font-size: 15px; color: var(--muted); letter-spacing: .01em; }
 #info b { color: var(--ink); font-weight: 700; margin-right: .4em; }
 
-#gear {
+.tools { display: flex; gap: 6px; flex: none; }
+.hold {
   position: relative; width: 48px; height: 48px; border: 0; border-radius: 50%;
   background: transparent; color: var(--muted); padding: 0; flex: none;
-  touch-action: none;
+  touch-action: none; -webkit-touch-callout: none;
 }
-#gear svg { width: 48px; height: 48px; display: block; }
-#gear .ring { fill: none; stroke: var(--go); stroke-width: 3; stroke-dasharray: 138.2; stroke-dashoffset: 138.2; transform: rotate(-90deg); transform-origin: 24px 24px; }
-#gear.pressing .ring { animation: fillring .65s linear forwards; }
+.hold svg { width: 48px; height: 48px; display: block; }
+.hold .ring { fill: none; stroke: var(--go); stroke-width: 3; stroke-dasharray: 138.2; stroke-dashoffset: 138.2; transform: rotate(-90deg); transform-origin: 24px 24px; }
+.hold.pressing .ring { animation: fillring .65s linear forwards; }
+body.together #pen { color: var(--go); background: var(--go-soft); }
 @keyframes fillring { to { stroke-dashoffset: 0; } }
 
 #stage {
@@ -301,6 +303,27 @@ textarea { font-size: 15px; resize: vertical; }
 #pasteBox { display: grid; gap: 8px; }
 #pasteBox[hidden] { display: none; }
 
+/* ---- Zusammen spielen ---- */
+#play {
+  position: fixed; inset: 0; z-index: 35; background: rgba(38,51,58,.32);
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: calc(6vh + env(safe-area-inset-top)) 16px 16px; overflow-y: auto;
+  user-select: text; -webkit-user-select: text; cursor: auto;
+}
+#play[hidden] { display: none; }
+#playForm {
+  width: min(520px, 100%); background: var(--sheet); border-radius: 20px; padding: 22px 22px 18px;
+  display: grid; gap: 12px; box-shadow: 0 20px 50px -24px rgba(38,51,58,.6); animation: slidein .25s ease;
+}
+#playForm h2 { margin: 0; font-size: 22px; }
+input.big { font-size: 30px; padding: 10px 14px; }
+#playEmoji { font-family: var(--emoji), var(--font); font-size: 24px; padding: 6px 10px; }
+#playPreview { min-height: 1.8em; }
+#playPreview .pw { font-size: 26px; }
+.row.end { justify-content: flex-end; }
+.linkbtn { justify-self: center; border: 0; background: transparent; color: var(--go); font-size: 15px; text-decoration: underline; text-underline-offset: 3px; padding: 6px; }
+.linkbtn[hidden] { display: none; }
+
 @media (max-width: 480px) {
   .chips { grid-template-columns: 1fr; }
   #info span { display: none; }
@@ -314,7 +337,17 @@ textarea { font-size: 15px; resize: vertical; }
 <div id="app">
   <header>
     <div id="info"><b>Wort für Wort</b><span id="infoMode"></span></div>
-    <button id="gear" aria-label="Einstellungen öffnen (gedrückt halten)">
+    <div class="tools">
+    <button id="pen" class="hold" aria-label="Eigenes Wort eingeben (gedrückt halten)">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="ring" cx="24" cy="24" r="22"></circle>
+        <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.5 33.5 L16.3 26.7 L28.6 14.4 a2.6 2.6 0 0 1 3.7 0 L33.6 15.7 a2.6 2.6 0 0 1 0 3.7 L21.3 31.7 Z"></path>
+          <path d="M26 17 L31 22"></path>
+        </g>
+      </svg>
+    </button>
+    <button id="gear" class="hold" aria-label="Einstellungen öffnen (gedrückt halten)">
       <svg viewBox="0 0 48 48" aria-hidden="true">
         <circle class="ring" cx="24" cy="24" r="22"></circle>
         <g fill="none" stroke="currentColor" stroke-linecap="round">
@@ -326,6 +359,7 @@ textarea { font-size: 15px; resize: vertical; }
         </g>
       </svg>
     </button>
+    </div>
   </header>
 
   <main id="stage">
@@ -389,6 +423,25 @@ textarea { font-size: 15px; resize: vertical; }
 <canvas id="fx" aria-hidden="true"></canvas>
 <div id="toast" role="status"></div>
 <div id="scrim"></div>
+
+<div id="play" role="dialog" aria-modal="true" aria-labelledby="playTitle" hidden>
+  <form id="playForm" autocomplete="off">
+    <h2 id="playTitle">Zusammen spielen</h2>
+    <p class="note">Du denkst dir ein Wort aus, dein Kind deckt es auf und liest es.</p>
+    <div class="field">
+      <label for="playWord">Wort</label>
+      <input id="playWord" class="big" spellcheck="false" autocorrect="off" placeholder="z. B. Pa-pa">
+    </div>
+    <p id="playPreview" class="preview" aria-live="polite"></p>
+    <div class="field">
+      <label for="playEmoji">Bild (freiwillig)</label>
+      <input id="playEmoji" placeholder="Emoji">
+    </div>
+    <p class="note">Ohne Bild fragt die App nach dem Lesen gleich „Richtig gelesen?“. Bekannte Wörter wie „Hund“ bekommen ihr Bild automatisch.</p>
+    <div class="row end"><button type="button" class="btn" id="playCancel">Abbrechen</button><button type="submit" class="btn primary">Los geht’s</button></div>
+    <button type="button" class="linkbtn" id="playEnd" hidden>Zusammen spielen beenden</button>
+  </form>
+</div>
 
 <aside id="settings" role="dialog" aria-modal="true" aria-labelledby="setTitle" hidden>
   <div class="set-head">
@@ -1016,6 +1069,7 @@ weiß|⚪`;
 
   const wordEl = $('#word'), sheet = $('#sheet');
   let cur = null, units = [], sylEls = [], k = 0, state = 'reveal', bag = [], lastKey = null, askTimer = null;
+  let together = false; // „Zusammen spielen“: Eltern geben Wort für Wort selbst ein
 
   function setState(s) { state = s; document.body.dataset.state = s; }
 
@@ -1025,7 +1079,8 @@ weiß|⚪`;
     wordEl.classList.toggle('ph', S.placeholders);
     sheet.classList.toggle('lined', S.lineatur);
     const lv = S.levels.slice().sort().map(n => LEVEL_NAME[n]).join(', ');
-    $('#infoMode').textContent = (S.mode === 'letters' ? 'Buchstaben' : 'Silben') + ' · ' + lv + (S.source === 'own' ? ' · eigene Wörter' : '');
+    $('#infoMode').textContent = (S.mode === 'letters' ? 'Buchstaben' : 'Silben') + ' · ' + (together ? 'Zusammen spielen' : lv + (S.source === 'own' ? ' · eigene Wörter' : ''));
+    document.body.classList.toggle('together', together);
   }
 
   function renderWord() {
@@ -1097,7 +1152,11 @@ weiß|⚪`;
     if (k === units.length) {
       setState('read');
       clearTimeout(askTimer);
-      askTimer = setTimeout(() => { if (state === 'read') setState('ask'); }, 700);
+      askTimer = setTimeout(() => {
+        if (state !== 'read') return;
+        if (cur.emoji) setState('ask');
+        else { $('#emoji').textContent = ''; setState('solved'); } // ohne Bild direkt „Richtig gelesen?“
+      }, 700);
     }
   }
 
@@ -1288,6 +1347,7 @@ weiß|⚪`;
   });
   document.addEventListener('keydown', (e) => {
     if (document.body.classList.contains('set-open')) { if (e.key === 'Escape') closeSettings(); return; }
+    if (!$('#play').hidden) { if (e.key === 'Escape') closePlay(); return; }
     if (e.target.closest && e.target.closest('button, input, textarea, select')) return;
     if ((e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') && state === 'reveal') { e.preventDefault(); click('tap', k); reveal(); }
   });
@@ -1302,9 +1362,9 @@ weiß|⚪`;
   });
   $('#askNo').addEventListener('click', restartWord);
   $('#ok').addEventListener('click', () => { setState('cheer'); fanfare(); confetti(); });
-  $('#bad').addEventListener('click', () => { setState('retry'); requeue(cur); });
+  $('#bad').addEventListener('click', () => { setState('retry'); if (!cur.adhoc) requeue(cur); });
   $('#again').addEventListener('click', restartWord);
-  $('#next').addEventListener('click', goNext);
+  $('#next').addEventListener('click', () => { if (together) openPlay(); else goNext(); });
   window.addEventListener('resize', () => { fit(); if (fxRun) sizeFx(); });
 
   // ---------- Toast ----------
@@ -1314,18 +1374,59 @@ weiß|⚪`;
     clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200);
   }
 
-  // ---------- Einstellungen öffnen (gedrückt halten) ----------
-  const gear = $('#gear'); let pressT = null;
-  gear.addEventListener('pointerdown', (e) => {
+  // ---------- Knöpfe für Eltern: gedrückt halten statt tippen ----------
+  function holdButton(btn, action, hint) {
+    let t = null;
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      btn.classList.add('pressing');
+      t = setTimeout(() => { t = null; btn.classList.remove('pressing'); action(); }, 650);
+    });
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, () => {
+      if (t) { clearTimeout(t); t = null; btn.classList.remove('pressing'); if (ev === 'pointerup') toast(hint); }
+    }));
+    btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); action(); } });
+    btn.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
+  const gear = $('#gear');
+  holdButton(gear, () => openSettings(), 'Für die Einstellungen das Zahnrad gedrückt halten');
+  holdButton($('#pen'), () => openPlay(), 'Für ein eigenes Wort den Stift gedrückt halten');
+
+  // ---------- Zusammen spielen ----------
+  const playEl = $('#play');
+  const findEmoji = (syl) => { const p = syl.join('').toLowerCase(); const w = allWords().find(x => x.plain === p); return w ? w.emoji : ''; };
+  function playPreview() {
+    const raw = $('#playWord').value, p = $('#playPreview');
+    if (!raw.trim()) { p.textContent = 'Silben mit Bindestrich trennen (Trak-tor). Ohne Bindestrich trennt die App selbst.'; return; }
+    const syl = parseWord(raw);
+    if (!syl) { p.textContent = 'Bitte nur Buchstaben und Bindestriche verwenden.'; return; }
+    const own = $('#playEmoji').value.trim(), auto = own ? '' : findEmoji(syl);
+    p.innerHTML = `<span class="pw">${sylHTML(syl)}</span>` + (own ? '' : auto ? `Bild: <span style="font-family:var(--emoji)">${esc(auto)}</span> (aus dem Wortschatz)` : 'ohne Bild');
+  }
+  function openPlay() {
+    $('#playWord').value = ''; $('#playEmoji').value = '';
+    $('#playEnd').hidden = !together;
+    playPreview();
+    playEl.hidden = false; document.body.classList.add('play-open');
+    $('#playWord').focus();
+  }
+  function closePlay() { playEl.hidden = true; document.body.classList.remove('play-open'); }
+  $('#playWord').addEventListener('input', playPreview);
+  $('#playEmoji').addEventListener('input', playPreview);
+  $('#playCancel').addEventListener('click', closePlay);
+  playEl.addEventListener('click', (e) => { if (e.target === playEl) closePlay(); });
+  $('#playForm').addEventListener('submit', (e) => {
     e.preventDefault();
-    gear.classList.add('pressing');
-    pressT = setTimeout(() => { pressT = null; gear.classList.remove('pressing'); openSettings(); }, 650);
+    const syl = parseWord($('#playWord').value);
+    if (!syl) { toast('Bitte ein Wort eingeben'); $('#playWord').focus(); return; }
+    const w = makeWord(syl, $('#playEmoji').value.trim() || findEmoji(syl), 'auto', true);
+    w.adhoc = true;
+    together = true;
+    $('#playWord').blur(); closePlay();
+    wordEl.classList.add('out'); setState('reveal');
+    setTimeout(() => { wordEl.classList.remove('out'); startWord(w); }, 180);
   });
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => gear.addEventListener(ev, () => {
-    if (pressT) { clearTimeout(pressT); pressT = null; gear.classList.remove('pressing'); if (ev === 'pointerup') toast('Für die Einstellungen das Zahnrad gedrückt halten'); }
-  }));
-  gear.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openSettings(); } });
-  gear.addEventListener('contextmenu', (e) => e.preventDefault());
+  $('#playEnd').addEventListener('click', () => { together = false; closePlay(); applyDisplay(); goNext(); });
 
   let openSnap = null;
   const filterSnap = () => JSON.stringify([S.levels, S.minLen, S.maxLen, S.source, S.knownOn, S.known, OWN.map(w => w.key + w.level)]);
@@ -1342,7 +1443,8 @@ weiß|⚪`;
     document.body.classList.remove('set-open');
     applyDisplay();
     if (!openSnap) return;
-    if (openSnap.f !== filterSnap() || !cur) { rebuildBag(); lastKey = null; goNext(); }
+    if ((openSnap.f !== filterSnap() && !together) || !cur) { rebuildBag(); lastKey = null; goNext(); }
+    else if (openSnap.f !== filterSnap()) { rebuildBag(); if (openSnap.s !== shapeSnap()) startWord(cur); else fit(); }
     else if (openSnap.s !== shapeSnap()) { startWord(cur); }
     else { fit(); }
     openSnap = null;
@@ -1493,6 +1595,7 @@ weiß|⚪`;
   if (native && AppPlugin) {
     AppPlugin.addListener('backButton', () => {
       if (document.body.classList.contains('set-open')) closeSettings();
+      else if (!playEl.hidden) closePlay();
       else AppPlugin.minimizeApp();
     });
     AppPlugin.getInfo().then(i => { versionText = ' App-Version ' + i.version + '.'; }).catch(() => {});
