@@ -1,5 +1,5 @@
 // Service Worker: hält die App offline verfügbar. Der Cache-Name ändert sich mit jeder neuen Version der App.
-const CACHE = 'wortfuerwort-bf1b1cd68d';
+const CACHE = 'wortfuerwort-5832d588f9';
 const FILES = [
   './', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',
