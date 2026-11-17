@@ -1,0 +1,128 @@
+# Baut aus der Web-App im Ordner docs/ eine Android-App (APK) und veröffentlicht sie als GitHub-Release.
+# Startet automatisch, sobald sich etwas an der App ändert – oder von Hand unter Actions → „Android-APK bauen“ → „Run workflow“.
+name: Android-APK bauen
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'android-vorlage/**'
+      - 'tools/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.json'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_VERSION: 1.0.${{ github.run_number }}
+    steps:
+      - name: Repo auschecken
+        uses: actions/checkout@v7
+
+      - name: Dateien im Repo prüfen
+        run: |
+          fehlt=""
+          for f in docs/index.html docs/sw.js docs/manifest.webmanifest docs/icons/icon-512.png \
+                   capacitor.config.json package.json tools/android-anpassen.mjs \
+                   android-vorlage/res/values/styles.xml android-vorlage/res/mipmap-xxxhdpi/ic_launcher.png; do
+            [ -f "$f" ] || fehlt="$fehlt $f"
+          done
+          if [ -n "$fehlt" ]; then
+            echo "::error title=Dateien fehlen im Repo::$fehlt"
+            exit 1
+          fi
+          echo "Alle nötigen Dateien sind da."
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Java einrichten
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Signaturschlüssel bereitstellen
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE" ]; then
+            printf '%s' "$ANDROID_KEYSTORE" | tr -d ' \r\n' | base64 -d > "$RUNNER_TEMP/wortfuerwort.p12"
+            {
+              echo "WFW_KEYSTORE=$RUNNER_TEMP/wortfuerwort.p12"
+              echo "WFW_KEYSTORE_PASSWORD=wortfuerwort"
+              echo "WFW_KEY_ALIAS=wortfuerwort"
+              echo "SIGNIERT=ja"
+            } >> "$GITHUB_ENV"
+          else
+            echo "SIGNIERT=nein" >> "$GITHUB_ENV"
+            echo "::warning title=Kein eigener Signaturschlüssel::Das Secret ANDROID_KEYSTORE fehlt. Die APK wird mit einem wechselnden Test-Schlüssel gebaut – spätere Versionen lassen sich dann nicht einfach darüber installieren."
+          fi
+
+      - name: Capacitor installieren
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            echo "package-lock.json fehlt – installiere die fest eingetragenen Versionen aus package.json."
+            npm install --no-audit --no-fund
+          fi
+          npx cap --version
+
+      - name: Android-Projekt erzeugen
+        run: |
+          npx cap add android
+          node tools/android-anpassen.mjs
+          npx cap sync android
+
+      - name: APK bauen
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          if [ "$SIGNIERT" = "ja" ]; then
+            ./gradlew assembleRelease --no-daemon --stacktrace
+            cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/WortFuerWort-$APP_VERSION.apk"
+          else
+            ./gradlew assembleDebug --no-daemon --stacktrace
+            cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/WortFuerWort-$APP_VERSION.apk"
+          fi
+          ls -la "$GITHUB_WORKSPACE"/WortFuerWort-*.apk
+
+      - name: APK als Build-Ergebnis ablegen
+        uses: actions/upload-artifact@v7
+        with:
+          name: WortFuerWort-${{ env.APP_VERSION }}
+          path: WortFuerWort-${{ env.APP_VERSION }}.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Release veröffentlichen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$SIGNIERT" = "ja" ]; then
+            HINWEIS="Mit dem eigenen App-Schlüssel signiert: lässt sich direkt über eine ältere Version installieren, eigene Wörter und Einstellungen bleiben erhalten."
+          else
+            HINWEIS="Achtung: mit Test-Schlüssel gebaut (Secret ANDROID_KEYSTORE fehlt). Ist schon eine ältere Version installiert, vorher in den Einstellungen die eigenen Wörter mit „Liste kopieren“ sichern und die alte App deinstallieren."
+          fi
+          printf '%s\n\n%s\n' "Android-App „Wort für Wort“, Version $APP_VERSION. Auf dem Tablet oder Handy die APK unten antippen, herunterladen, öffnen und installieren." "$HINWEIS" > notes.txt
+          gh release create "v$APP_VERSION" "WortFuerWort-$APP_VERSION.apk" \
+            --title "Wort für Wort $APP_VERSION" \
+            --notes-file notes.txt \
+            --target "$GITHUB_SHA" \
+            --latest
